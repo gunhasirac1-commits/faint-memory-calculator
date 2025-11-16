@@ -1,0 +1,1085 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Faint Memory Calculator</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #020617;
+      color: #e5e7eb;
+      padding: 1.5rem;
+    }
+
+    .page {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-size: 1.75rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .section {
+      margin-bottom: 2rem;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.75rem;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .section-title {
+      font-size: 1.2rem;
+      font-weight: 600;
+    }
+
+    .controls {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    button {
+      border: none;
+      border-radius: 999px;
+      padding: 0.4rem 0.9rem;
+      font-size: 0.9rem;
+      cursor: pointer;
+      background: #1f2933;
+      color: #e5e7eb;
+      box-shadow: 0 0 0 1px rgba(148, 163, 184, 0.4);
+    }
+
+    button:hover {
+      background: #111827;
+    }
+
+    select {
+      border-radius: 999px;
+      padding: 0.35rem 0.75rem;
+      font-size: 0.9rem;
+      background: #020617;
+      color: #e5e7eb;
+      border: 1px solid rgba(148, 163, 184, 0.8);
+    }
+
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 1rem;
+    }
+
+    .card {
+      background: #020617;
+      border-radius: 0.75rem;
+      padding: 0.9rem 0.85rem;
+      box-shadow:
+        0 16px 40px rgba(0, 0, 0, 0.55),
+        0 0 0 1px rgba(148, 163, 184, 0.25);
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .card--normal {
+      border-top: 3px solid #64748b;
+    }
+
+    .card--unique {
+      border-top: 3px solid #a855f7;
+    }
+
+    .card--neutral {
+      border-top: 3px solid #22c55e;
+    }
+
+    .card--monster {
+      border-top: 3px solid #ef4444;
+    }
+
+    .card__header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.95rem;
+      font-weight: 600;
+    }
+
+    .card__meta {
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+    }
+
+    .card__title {
+      opacity: 0.9;
+    }
+
+    .card__slot {
+      font-size: 0.8rem;
+      opacity: 0.6;
+    }
+
+    .card__actions {
+      margin-left: auto;
+      display: flex;
+      gap: 0.35rem;
+      align-items: center;
+    }
+
+    .card__delete {
+      border-radius: 999px;
+      padding: 0.1rem 0.6rem;
+      font-size: 0.85rem;
+      line-height: 1.2;
+      background: rgba(239, 68, 68, 0.1);
+      box-shadow: 0 0 0 1px rgba(248, 113, 113, 0.4);
+    }
+
+    .card__delete:hover {
+      background: rgba(239, 68, 68, 0.25);
+    }
+
+    .card__copy {
+      border-radius: 999px;
+      padding: 0.1rem 0.7rem;
+      font-size: 0.8rem;
+      line-height: 1.2;
+      background: rgba(59, 130, 246, 0.08);
+      box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.5);
+    }
+
+    .card__copy:hover {
+      background: rgba(59, 130, 246, 0.22);
+    }
+
+    .card__statuses {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      font-size: 0.9rem;
+    }
+
+    .status input[type="checkbox"] {
+      width: 14px;
+      height: 14px;
+      cursor: pointer;
+    }
+
+    .status span {
+      cursor: pointer;
+      user-select: none;
+      text-transform: lowercase;
+    }
+
+    /* Blank placeholder row (used where we need a visual slot but no status) */
+    .status--blank {
+      height: 1.25rem;
+    }
+
+    /* Faint Memory section */
+    .faint-memory {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      font-size: 0.9rem;
+    }
+
+    .fm-stats {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+      max-width: 380px;
+    }
+
+    .fm-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      column-gap: 0.75rem;
+      align-items: baseline;
+    }
+
+    .fm-label {
+      opacity: 0.8;
+    }
+
+    .fm-value {
+      font-variant-numeric: tabular-nums;
+      text-align: left;
+    }
+
+    .fm-niku {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+      margin-top: 0.75rem;
+      align-items: flex-start;
+    }
+
+    .fm-niku label {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      cursor: pointer;
+    }
+
+    .fm-desc {
+      text-align: left;
+      max-width: 460px;
+      font-size: 0.85rem;
+      opacity: 0.9;
+    }
+
+    .fm-points {
+      margin-top: 1rem;
+      font-weight: 700;
+      font-size: 1.8rem; /* ~2x the base text size */
+      text-align: left;
+    }
+
+    .fm-reset {
+      margin-top: 0.75rem;
+    }
+    
+    .fm-row {
+  justify-items: start;
+}
+
+    .fm-label {
+  text-align: left;
+}
+
+  </style>
+</head>
+<body>
+  <div class="page">
+    <h1>曖昧な記憶計算機</h1>
+
+    <!-- Initial cards: A1–A4 -->
+    <section class="section">
+      <div class="section-header">
+        <div class="section-title">初期カード</div>
+      </div>
+      <div class="card-grid" id="normal-cards"></div>
+    </section>
+
+    <!-- Epiphany cards: B1–B4 -->
+    <section class="section">
+      <div class="section-header">
+        <div class="section-title">ヒラメキカード</div>
+      </div>
+      <div class="card-grid" id="unique-cards"></div>
+    </section>
+
+    <!-- Neutral / Monster cards (C*, D*) -->
+    <section class="section">
+      <div class="section-header">
+        <div class="section-title">中立／モンスターカード</div>
+        <div class="controls">
+          <select id="flex-card-type">
+            <option value="neutral">中立</option>
+            <option value="monster">モンスター</option>
+          </select>
+          <button id="add-flex-card">カード追加</button>
+        </div>
+      </div>
+      <div class="card-grid" id="flex-cards"></div>
+    </section>
+
+    <!-- Faint Memory -->
+    <section class="section">
+      <div class="section-header">
+        <div class="section-title">曖昧な記憶</div>
+      </div>
+      <div class="faint-memory">
+        <div class="fm-stats">
+          <div class="fm-row">
+            <div class="fm-label">削除したカード数 / 削除した固有カード数</div>
+            <div class="fm-value">
+              <span id="stat-removed-total">0</span> /
+              <span id="stat-removed-ab">0</span>
+            </div>
+          </div>
+          <div class="fm-row">
+            <div class="fm-label">変換したカード数</div>
+            <div class="fm-value" id="stat-conversion">0</div>
+          </div>
+          <div class="fm-row">
+            <div class="fm-label">コピーしたカード数</div>
+            <div class="fm-value" id="stat-copied">0</div>
+          </div>
+          <div class="fm-row">
+            <div class="fm-label">中立カード数</div>
+            <div class="fm-value" id="stat-neutral">0</div>
+          </div>
+          <div class="fm-row">
+            <div class="fm-label">モンスターカード数</div>
+            <div class="fm-value" id="stat-monster">0</div>
+          </div>
+          <div class="fm-row">
+            <div class="fm-label">中立／モンスターカードのヒラメキ数</div>
+            <div class="fm-value" id="stat-neutral-epiphany">0</div>
+          </div>
+          <div class="fm-row">
+            <div class="fm-label">神ヒラメキ数</div>
+            <div class="fm-value" id="stat-divine">0</div>
+          </div>
+        </div>
+
+        <div class="fm-niku">
+          <label>
+            <input type="checkbox" id="niku-checkbox" />
+            肉変換あり
+          </label>
+          <div class="fm-desc">
+            ありの場合、中立カードを追加せずに、変換したカードに変換済みとマークする。
+          </div>
+        </div>
+
+        <div class="fm-points" id="fm-points-line">
+          曖昧な記憶： 0 points
+        </div>
+
+        <div class="fm-reset">
+          <button id="reset-button">リセット</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      // Status labels by index
+      const STATUS_LABELS = {
+        1: "獲得済み",
+        2: "変換",
+        3: "通常ヒラメキ",
+        4: "神ヒラメキ",
+        5: "削除済み",
+        6: "変換済み"
+      };
+
+      // Internal counters for unique DOM ids
+      const counters = {
+        normal: 0,
+        unique: 0,
+        neutral: 0,
+        monster: 0
+      };
+
+      // Base-slot counters for neutral/monster:
+      // neutral -> C1, C2, ...
+      // monster -> D1, D2, ...
+      const baseSlotCounters = {
+        neutral: 0,
+        monster: 0
+      };
+
+      // --- Stats & points calculation ---
+
+      function recalcStats() {
+        const cards = document.querySelectorAll(".card");
+
+        let totalRemoved = 0;           // [1]
+        let removedAB = 0;              // [1′]
+        let conversionsChecked = 0;     // [2′] total "conversion" (status 2) checked
+        let convertedChecked = 0;       // [2]  total "converted" (status 6) checked (raw)
+        let duplicates = 0;             // [3]
+        let neutralCards = 0;           // [4]
+        let monsterCards = 0;           // [5]
+        let neutralMonsterEpiphany = 0; // [6]
+        let divineEpiphany = 0;         // [7]
+        let neutralRemovedCount = 0;    // # of neutral cards with removed/converted
+
+        cards.forEach((card) => {
+          const baseSlot = card.dataset.baseSlot || "";
+          const duplicateIndex = card.dataset.duplicateIndex || "";
+          const type = card.dataset.type || "";
+
+          if (duplicateIndex) duplicates++;
+
+          const inputsAll = card.querySelectorAll(
+            ".card__statuses input[type='checkbox']"
+          );
+
+          // Determine if this card is removed or converted (5 or 6)
+          let isRemovedOrConverted = false;
+          inputsAll.forEach((inp) => {
+            if (!inp.checked) return;
+            const sidx = parseInt(inp.dataset.statusIndex || "NaN", 10);
+            if (sidx === 5 || sidx === 6) {
+              isRemovedOrConverted = true;
+            }
+          });
+
+          // Count neutral/monster cards only if not removed/converted
+          if (!isRemovedOrConverted) {
+            if (type === "neutral") neutralCards++;
+            if (type === "monster") monsterCards++;
+          }
+
+          // For scoring, we need to know how many neutral cards are removed/converted
+          if (type === "neutral" && isRemovedOrConverted) {
+            neutralRemovedCount++;
+          }
+
+          // Count statuses for all checked boxes
+          inputsAll.forEach((input) => {
+            if (!input.checked) return;
+            const idx = parseInt(input.dataset.statusIndex || "NaN", 10);
+            if (Number.isNaN(idx)) return;
+
+            if (idx === 5) {
+              // removed
+              totalRemoved++;
+              if (/^[AB]/.test(baseSlot)) removedAB++;
+            } else if (idx === 2) {
+              // conversion
+              conversionsChecked++;
+            } else if (idx === 3) {
+              // epiphany
+              if (/^[CD]/.test(baseSlot)) {
+                neutralMonsterEpiphany++;
+              }
+            } else if (idx === 4) {
+              // divine
+              divineEpiphany++;
+            } else if (idx === 6) {
+              // converted
+              convertedChecked++;
+            }
+          });
+        });
+
+        const nikuBox = document.getElementById("niku-checkbox");
+        const niku = nikuBox && nikuBox.checked;
+
+        // [2′] = total "conversion" (status 2) checked
+        let twoPrime = conversionsChecked;
+
+        // [2] base = total "converted" (status 6) checked
+        let two = convertedChecked;
+
+        // niku adjustment applies to [2] (global)
+        if (niku) {
+          twoPrime = twoPrime + 1;
+        }
+
+        // For points: a neutral card that is removed/converted no longer contributes
+        let twoForPoints = Math.max(0, two - neutralRemovedCount);
+        if (niku) {
+          twoForPoints = twoForPoints - 1;
+        }
+
+        // Helper: piecewise scoring for [1] and [3]
+        function scorePiecewise(v) {
+          if (v <= 1) return 0;
+          if (v < 5) return (v - 1) * (v - 1) * 10;
+          return (v * 7 - 19) * 10;
+        }
+
+        const termRemoved = scorePiecewise(totalRemoved); // based on [1]
+        const termCopies = scorePiecewise(duplicates);    // based on [3]
+
+        let pt = 0;
+        pt += termRemoved;
+        pt += removedAB * 20;                 // [1′] * 20
+        pt += twoForPoints * 10;              // [2] * 10, but discounted by neutralRemovedCount
+        pt += termCopies;
+        pt += neutralCards * 20;              // [4] * 20
+        pt += monsterCards * 80;              // [5] * 80
+        pt += neutralMonsterEpiphany * 10;    // [6] * 10
+        pt += divineEpiphany * 20;            // [7] * 20
+
+        // Update UI stats
+        const setText = (id, value) => {
+          const el = document.getElementById(id);
+          if (el) el.textContent = String(value);
+        };
+
+        setText("stat-removed-total", totalRemoved);
+        setText("stat-removed-ab", removedAB);
+        setText("stat-conversion", two);
+        setText("stat-copied", duplicates);
+        setText("stat-neutral", neutralCards);
+        setText("stat-monster", monsterCards);
+        setText("stat-neutral-epiphany", neutralMonsterEpiphany);
+        setText("stat-divine", divineEpiphany);
+
+        // Impossible scenario detection AFTER niku adjustment
+        // (uses raw [2] with niku, NOT the discounted twoForPoints)
+        const fmLine = document.getElementById("fm-points-line");
+
+        // Adjust twoPrime for impossible-scenario check when niku is true
+        if (fmLine) {
+          if (two === twoPrime) {
+            fmLine.textContent = `最終曖昧な記憶： ${pt} points`;
+  } else if (two < twoPrime) {
+            fmLine.textContent =
+      `変換数 (${two}) ＜ 変換されたカード数 (${twoPrime})`;
+  } else {
+            fmLine.textContent =
+      `変換数 (${two}) ＞ 変換されたカード数 (${twoPrime})`;
+          }
+        }
+      }
+
+
+      /**
+       * Create a card DOM element.
+       * options:
+       *  - baseSlot: "A1", "B2", "C3", "D1", ...
+       *  - duplicateIndex: number | null (for "-1", "-2", ...)
+       *  - deletable: boolean
+       *  - copyable: boolean
+       *  - statuses: array of status indices (e.g. [3,4,5,6])
+       *  - title: string (shown in header)
+       *  - containerId: string (for duplicates to know where to insert)
+       */
+      function createCard(type, options = {}) {
+        const {
+          baseSlot,
+          duplicateIndex = null,
+          deletable = false,
+          copyable = false,
+          statuses = [1, 2, 3, 4, 5, 6],
+          title = "",
+          containerId = ""
+        } = options;
+
+        const index = ++counters[type];
+
+        const card = document.createElement("div");
+        card.className = `card card--${type}`;
+        card.dataset.type = type;
+        card.dataset.index = String(index);
+        card.dataset.baseSlot = baseSlot || "";
+        card.dataset.duplicateIndex = duplicateIndex ? String(duplicateIndex) : "";
+        card.dataset.containerId = containerId;
+        card.dataset.statusList = JSON.stringify(statuses);
+        card.dataset.title = title;
+
+        const slotLabel = duplicateIndex
+          ? `${baseSlot}-${duplicateIndex}`
+          : baseSlot;
+
+        // Header
+        const header = document.createElement("div");
+        header.className = "card__header";
+
+        const meta = document.createElement("div");
+        meta.className = "card__meta";
+
+        const titleDiv = document.createElement("div");
+        titleDiv.className = "card__title";
+        titleDiv.textContent = title || type;
+
+        const slotDiv = document.createElement("div");
+        slotDiv.className = "card__slot";
+        slotDiv.textContent = slotLabel;
+
+        meta.appendChild(titleDiv);
+        meta.appendChild(slotDiv);
+        header.appendChild(meta);
+
+        const actions = document.createElement("div");
+        actions.className = "card__actions";
+
+        // Copy button
+        if (copyable) {
+          const copyBtn = document.createElement("button");
+          copyBtn.className = "card__copy";
+          copyBtn.type = "button";
+          copyBtn.textContent = "コピー";
+          copyBtn.title = "Create a duplicate of this card";
+          copyBtn.addEventListener("click", () => {
+            const contId = card.dataset.containerId;
+            const base = card.dataset.baseSlot;
+            const type = card.dataset.type;
+            if (!contId || !base) return;
+
+            if (!duplicateCounters[base]) {
+              duplicateCounters[base] = 0;
+            }
+            duplicateCounters[base] += 1;
+            const dupIdx = duplicateCounters[base];
+
+            const statusList = JSON.parse(card.dataset.statusList || "[]");
+            const titleText = card.dataset.title || "";
+
+            addCard(type, contId, {
+              baseSlot: base,
+              duplicateIndex: dupIdx,
+              deletable: true,
+              copyable: true,
+              statuses: statusList,
+              title: titleText
+            });
+          });
+          actions.appendChild(copyBtn);
+        }
+
+        // Delete button
+        if (deletable) {
+          const delBtn = document.createElement("button");
+          delBtn.className = "card__delete";
+          delBtn.type = "button";
+          delBtn.textContent = "×";
+          delBtn.title = "Delete this card";
+          delBtn.addEventListener("click", () => {
+            card.remove();
+            recalcStats();
+          });
+          actions.appendChild(delBtn);
+        }
+
+        if (actions.childNodes.length > 0) {
+          header.appendChild(actions);
+        }
+
+        card.appendChild(header);
+
+        // Status checkboxes
+        const statusesWrap = document.createElement("div");
+        statusesWrap.className = "card__statuses";
+
+        const isGroupA = baseSlot && /^A/.test(baseSlot);
+        const isGroupB = baseSlot && /^B/.test(baseSlot);
+        const isGroupD = baseSlot && /^D/.test(baseSlot);
+
+        const allowed = new Set(statuses);
+
+        if (isGroupA) {
+          // Group A: 4-row layout [3,4,5,6] with blanks where not applicable.
+          const layout = [3, 4, 5, 6];
+          layout.forEach((idx) => {
+            const labelText = STATUS_LABELS[idx];
+            if (!labelText) return;
+
+            if (!allowed.has(idx)) {
+              const blankRow = document.createElement("div");
+              blankRow.className = "status status--blank";
+              statusesWrap.appendChild(blankRow);
+              return;
+            }
+
+            const id = `${type}-${index}-status-${idx}`;
+            const wrapper = document.createElement("label");
+            wrapper.className = "status";
+
+            const checkbox = document.createElement("input");
+            checkbox.type = "checkbox";
+            checkbox.id = id;
+            checkbox.dataset.statusIndex = String(idx);
+
+            const textSpan = document.createElement("span");
+            textSpan.textContent = labelText;
+
+            wrapper.appendChild(checkbox);
+            wrapper.appendChild(textSpan);
+            statusesWrap.appendChild(wrapper);
+          });
+        } else if (isGroupB) {
+          // Group B: fixed 5-row layout [1,3,4,5,6] with blanks where needed
+          const layout = [1, 3, 4, 5, 6];
+          layout.forEach((idx) => {
+            const labelText = STATUS_LABELS[idx];
+            if (!labelText) return;
+
+            if (!allowed.has(idx)) {
+              const blankRow = document.createElement("div");
+              blankRow.className = "status status--blank";
+              statusesWrap.appendChild(blankRow);
+              return;
+            }
+
+            const id = `${type}-${index}-status-${idx}`;
+            const wrapper = document.createElement("label");
+            wrapper.className = "status";
+
+            const checkbox = document.createElement("input");
+            checkbox.type = "checkbox";
+            checkbox.id = id;
+            checkbox.dataset.statusIndex = String(idx);
+
+            const textSpan = document.createElement("span");
+            textSpan.textContent = labelText;
+
+            wrapper.appendChild(checkbox);
+            wrapper.appendChild(textSpan);
+            statusesWrap.appendChild(wrapper);
+          });
+        } else if (isGroupD) {
+          // Group D: 5-row layout [2,3,4,5,6], conversion row is blank placeholder
+          const layout = [2, 3, 4, 5, 6];
+          layout.forEach((idx) => {
+            const labelText = STATUS_LABELS[idx];
+            if (!labelText) return;
+
+            if (!allowed.has(idx)) {
+              const blankRow = document.createElement("div");
+              blankRow.className = "status status--blank";
+              statusesWrap.appendChild(blankRow);
+              return;
+            }
+
+            const id = `${type}-${index}-status-${idx}`;
+            const wrapper = document.createElement("label");
+            wrapper.className = "status";
+
+            const checkbox = document.createElement("input");
+            checkbox.type = "checkbox";
+            checkbox.id = id;
+            checkbox.dataset.statusIndex = String(idx);
+
+            const textSpan = document.createElement("span");
+            textSpan.textContent = labelText;
+
+            wrapper.appendChild(checkbox);
+            wrapper.appendChild(textSpan);
+            statusesWrap.appendChild(wrapper);
+          });
+        } else {
+          // Default (Group C/neutral and any others): render given statuses in order
+          statuses.forEach((idx) => {
+            const labelText = STATUS_LABELS[idx];
+            if (!labelText) return;
+
+            const id = `${type}-${index}-status-${idx}`;
+
+            const wrapper = document.createElement("label");
+            wrapper.className = "status";
+
+            const checkbox = document.createElement("input");
+            checkbox.type = "checkbox";
+            checkbox.id = id;
+            checkbox.dataset.statusIndex = String(idx);
+
+            const textSpan = document.createElement("span");
+            textSpan.textContent = labelText;
+
+            wrapper.appendChild(checkbox);
+            wrapper.appendChild(textSpan);
+            statusesWrap.appendChild(wrapper);
+          });
+        }
+
+        card.appendChild(statusesWrap);
+        return card;
+      }
+
+      // Duplicate counters per base slot (A4 -> A4-1, A4-2, etc.)
+      const duplicateCounters = {};
+
+      function attachCardLogic(card) {
+        const baseSlot = card.dataset.baseSlot || "";
+        const isGroupA = /^A/.test(baseSlot);
+        const isGroupB = /^B/.test(baseSlot);
+        const isGroupC = /^C/.test(baseSlot);
+
+        const inputs = card.querySelectorAll(
+          ".card__statuses input[type='checkbox']"
+        );
+        const boxes = {};
+
+        inputs.forEach((input) => {
+          const idx = parseInt(input.dataset.statusIndex || "NaN", 10);
+          if (!Number.isNaN(idx)) {
+            boxes[idx] = input;
+          }
+        });
+
+        // Helper for enabling/disabling a set of boxes
+        function setDisabled(indices, disabled) {
+          indices.forEach((idx) => {
+            const box = boxes[idx];
+            if (!box) return;
+            box.disabled = disabled;
+            if (disabled) {
+              box.checked = false;
+            }
+          });
+        }
+
+        // Handle effect of removed/converted for groups A, B, C
+        function handleRemovedOrConverted() {
+          const removedOn = boxes[5] && boxes[5].checked;
+          const convertedOn = boxes[6] && boxes[6].checked;
+          const any5or6 = removedOn || convertedOn;
+
+          // Groups A & B: epiphany/divine cleared & blacked out
+          if ((isGroupA || isGroupB) && (boxes[3] || boxes[4])) {
+            if (any5or6) {
+              if (boxes[3]) {
+                boxes[3].checked = false;
+                boxes[3].disabled = true;
+              }
+              if (boxes[4]) {
+                boxes[4].checked = false;
+                boxes[4].disabled = true;
+              }
+            } else {
+              // Re-enable epiphany/divine unless Group B base with obtained unchecked
+              if (isGroupB && boxes[1] && !boxes[1].checked) {
+                // Obtained rule will keep them disabled
+              } else {
+                if (boxes[3]) boxes[3].disabled = false;
+                if (boxes[4]) boxes[4].disabled = false;
+              }
+            }
+          }
+
+          // Group C: when removed/converted, lock conversion but keep its state;
+          // epiphany/divine are cleared and locked.
+          if (isGroupC) {
+            if (any5or6) {
+              // lock conversion (2) but do NOT change whether it's checked
+              if (boxes[2]) {
+                boxes[2].disabled = true;
+              }
+              // epiphany (3) and divine (4): clear + lock
+              if (boxes[3]) {
+                boxes[3].checked = false;
+                boxes[3].disabled = true;
+              }
+              if (boxes[4]) {
+                boxes[4].checked = false;
+                boxes[4].disabled = true;
+              }
+            } else {
+              // no removed/converted: re-enable 2,3,4
+              if (boxes[2]) boxes[2].disabled = false;
+              if (boxes[3]) boxes[3].disabled = false;
+              if (boxes[4]) boxes[4].disabled = false;
+            }
+          }
+        }
+
+        // removed (5) and converted (6) mutually exclusive + extra group-specific behavior
+        if (boxes[5]) {
+          boxes[5].addEventListener("change", () => {
+            if (boxes[5].checked) {
+              if (boxes[6]) {
+                boxes[6].checked = false;
+                boxes[6].disabled = true;
+              }
+            } else {
+              if (boxes[6]) boxes[6].disabled = false;
+            }
+            handleRemovedOrConverted();
+            recalcStats();
+          });
+        }
+
+        if (boxes[6]) {
+          boxes[6].addEventListener("change", () => {
+            if (boxes[6].checked) {
+              if (boxes[5]) {
+                boxes[5].checked = false;
+                boxes[5].disabled = true;
+              }
+            } else {
+              if (boxes[5]) boxes[5].disabled = false;
+            }
+            handleRemovedOrConverted();
+            recalcStats();
+          });
+        }
+
+        // epiphany (3) / divine (4) linkage
+        if (boxes[3] && boxes[4]) {
+          // divine checked -> epiphany automatically checked
+          boxes[4].addEventListener("change", () => {
+            if (boxes[4].checked) {
+              boxes[3].checked = true;
+            }
+            recalcStats();
+          });
+
+          // epiphany unchecked -> divine automatically unchecked
+          boxes[3].addEventListener("change", () => {
+            if (!boxes[3].checked) {
+              boxes[4].checked = false;
+            }
+            recalcStats();
+          });
+        }
+
+        // --- Specialized logic for B1–B4 (and their duplicates) ---
+        if (isGroupB && boxes[1]) {
+          const duplicateIndex = card.dataset.duplicateIndex || "";
+
+          // Base B cards: obtained default checked & can be toggled
+          // Duplicates: obtained forced checked & disabled
+          boxes[1].checked = true;
+
+          if (duplicateIndex) {
+            // Duplicate: cannot uncheck "obtained"
+            boxes[1].disabled = true;
+          } else {
+            // Base card: toggle obtained locks/unlocks 3,4,5,6
+            boxes[1].addEventListener("change", () => {
+              const obtainedChecked = boxes[1].checked;
+              const others = [3, 4, 5, 6];
+
+              if (!obtainedChecked) {
+                // When obtained is unchecked, blackout 3,4,5,6
+                setDisabled(others, true);
+              } else {
+                // Re-enable 3,4,5,6,
+                // but removed/converted handler may immediately override parts
+                setDisabled(others, false);
+                handleRemovedOrConverted();
+              }
+              recalcStats();
+            });
+
+            // Ensure initial blackout state (obtained starts checked)
+            if (!boxes[1].checked) {
+              setDisabled([3, 4, 5, 6], true);
+            }
+          }
+        }
+
+        // For any other checkbox changes not covered above, still recalc stats
+        inputs.forEach((input) => {
+          const idx = parseInt(input.dataset.statusIndex || "NaN", 10);
+          const isSpecial =
+            idx === 1 || idx === 3 || idx === 4 || idx === 5 || idx === 6;
+          if (isSpecial) return; // already have handlers
+          input.addEventListener("change", recalcStats);
+        });
+
+        // Initial stats with this card present
+        recalcStats();
+      }
+
+      function addCard(type, containerId, options = {}) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        const card = createCard(type, { ...options, containerId });
+        container.appendChild(card);
+        attachCardLogic(card);
+      }
+
+      // --- Prepopulate Initial cards (A1–A4) ---
+
+      // A1: normal card #1 (statuses: removed, converted)
+      addCard("normal", "normal-cards", {
+        baseSlot: "A1",
+        title: "基本カード #1",
+        statuses: [5, 6]
+      });
+
+      // A2: normal card #2
+      addCard("normal", "normal-cards", {
+        baseSlot: "A2",
+        title: "基本カード #2",
+        statuses: [5, 6]
+      });
+
+      // A3: normal card #3
+      addCard("normal", "normal-cards", {
+        baseSlot: "A3",
+        title: "基本カード #3",
+        statuses: [5, 6]
+      });
+
+      // A4: unique card #1, copyable, statuses 3–6
+      addCard("normal", "normal-cards", {
+        baseSlot: "A4",
+        title: "固有カード #1",
+        statuses: [3, 4, 5, 6],
+        copyable: true
+      });
+
+      // --- Prepopulate Epiphany cards (B1–B4) ---
+      // B1–B4 mapped to unique card #2–#5, all copyable, statuses [1,3,4,5,6]
+      for (let i = 1; i <= 4; i++) {
+        const baseSlot = `B${i}`;
+        const titleNumber = i + 1; // B1->2, B2->3, B3->4, B4->5
+        addCard("unique", "unique-cards", {
+          baseSlot,
+          title: `固有カード #${titleNumber}`,
+          statuses: [1, 3, 4, 5, 6],
+          copyable: true
+        });
+      }
+
+      // --- Neutral / Monster cards (dynamic C*/D*) ---
+
+      const typeSelect = document.getElementById("flex-card-type");
+      const addFlexBtn = document.getElementById("add-flex-card");
+
+      if (addFlexBtn && typeSelect) {
+        addFlexBtn.addEventListener("click", () => {
+          const type = typeSelect.value === "monster" ? "monster" : "neutral";
+
+          // Determine base slot label
+          baseSlotCounters[type] += 1;
+          const baseIndex = baseSlotCounters[type];
+          const baseSlot =
+            type === "neutral" ? `C${baseIndex}` : `D${baseIndex}`;
+
+          const title =
+            type === "neutral" ? "中立カード" : "ﾓﾝｽﾀｰカード";
+
+          // Group C/D status specialization:
+          // C*: remove obtained -> [2,3,4,5,6]
+          // D*: remove obtained, conversion -> [3,4,5,6]
+          let statuses;
+          if (type === "neutral") {
+            statuses = [2, 3, 4, 5, 6];
+          } else {
+            statuses = [3, 4, 5, 6];
+          }
+
+          addCard(type, "flex-cards", {
+            baseSlot,
+            title,
+            statuses,
+            copyable: true,
+            deletable: true
+          });
+        });
+      }
+
+      // niku checkbox affects stats, especially [2]
+      const nikuBox = document.getElementById("niku-checkbox");
+      if (nikuBox) {
+        nikuBox.addEventListener("change", recalcStats);
+      }
+
+      // Reset button: reloads page (resets all state)
+      const resetBtn = document.getElementById("reset-button");
+      if (resetBtn) {
+        resetBtn.addEventListener("click", () => {
+          window.location.reload();
+        });
+      }
+
+      // Final initial stats sweep
+      recalcStats();
+    });
+  </script>
+</body>
+</html>
